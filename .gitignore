@@ -1,0 +1,5 @@
+.env
+*.pyc
+*.session
+*.xml
+./.venv
