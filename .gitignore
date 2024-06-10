@@ -3,3 +3,4 @@
 *.session
 *.xml
 ./.venv
+./.idea
