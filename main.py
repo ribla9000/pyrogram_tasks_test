@@ -20,9 +20,9 @@ async def start_db(app: Client):
 
 
 if __name__ == "__main__":
-    # logging.basicConfig(level=logging.INFO)
-    # alembic_cfg = Config("./alembic.ini")
-    # command.upgrade(alembic_cfg, "head")
+    logging.basicConfig(level=logging.INFO)
+    alembic_cfg = Config("./alembic.ini")
+    command.upgrade(alembic_cfg, "head")
     loop = asyncio.get_event_loop()
     app = Client(bot_token=BOT_TOKEN, name="test", api_hash=API_HASH, api_id=API_ID)
 
