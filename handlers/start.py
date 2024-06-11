@@ -1,4 +1,3 @@
-import logging
 from core.config import NONE_FUNCTION
 from pyrogram import filters, Client
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
@@ -82,9 +81,7 @@ async def none_function(client: Client, callback: CallbackQuery, state: State):
 async def get_nickname(client: Client, message: Message, state: State) -> Message:
     text = message.text
     reply = "Thx. Please now input your login. That's need for the log-in"
-    print(state.state, flush=True)
     await state.set_data({"nickname": text})
-    print(state.state, flush=True)
     await message.reply(text=reply, parse_mode=ParseMode.HTML)
     await state.set_state(UsersState.login)
 
@@ -92,6 +89,10 @@ async def get_nickname(client: Client, message: Message, state: State) -> Messag
 @router.on_message(StateFilter(UsersState.login))
 async def get_login(client: Client, message: Message, state: State) -> Message:
     text = message.text
+    old_login = await UsersRepository.get_by_login(login=text)
+    if old_login is not None:
+        return await message.reply(text="Sorry, this login already in use.", parse_mode=ParseMode.HTML)
+
     chat_id = str(message.from_user.id)
     user = await UsersRepository.get_by_chat_id(chat_id)
     await state.set_data({"login_name": text})

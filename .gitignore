@@ -3,4 +3,5 @@
 *.session
 *.xml
 ./.venv
-./.idea
+*.idea
+*-journal
