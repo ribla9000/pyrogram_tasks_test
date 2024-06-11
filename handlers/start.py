@@ -1,5 +1,6 @@
+import logging
 from core.config import NONE_FUNCTION
-from pyrogram import filters
+from pyrogram import filters, Client
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ParseMode
 from pyrogram_patch.router import Router
@@ -27,7 +28,8 @@ async def create_user(message: Message) -> int:
     return user_id
 
 
-async def start_menu(message: Union[Message, None] = None,
+async def start_menu(client: Union[Client, None] = None,
+                     message: Union[Message, None] = None,
                      callback: Union[CallbackQuery, None] = None,
                      state: Union[State, None] = None) -> Union[None, Message]:
     await state.finish()
@@ -56,38 +58,39 @@ async def start_menu(message: Union[Message, None] = None,
         return await message.reply(text=reply, parse_mode=ParseMode.HTML, reply_markup=keyboard)
 
     else:
+        print("start-menu-Boy", flush=True)
         return await callback.message.edit_text(text=reply, parse_mode=ParseMode.HTML, reply_markup=keyboard)
 
 
-@router.on_message(filters.command(["start"]))
-async def start_on_command(message: Message, state: State):
-    await state.finish()
-    return await start_menu(message=message, state=state)
+@router.on_message(filters=filters.command(["start"]) & filters.private)
+async def start_on_command(client: Client, message: Message, state: State):
+    return await start_menu(client=client, message=message, state=state)
 
 
-@router.on_callback_query((filters.CallbackQuery, filters.regex("^start")))
-async def start_on_callback(callback: CallbackQuery, state: State):
+@router.on_callback_query(filters.regex("^start"))
+async def start_on_callback(client: Client, callback: CallbackQuery, state: State):
     await state.finish()
-    return await start_menu(callback=callback)
+    return await start_menu(client=client, callback=callback, state=state)
 
 
 @router.on_callback_query(filters.regex(NONE_FUNCTION))
-async def none_function(callback: CallbackQuery, state: State):
-    await state.finish()
+async def none_function(client: Client, callback: CallbackQuery, state: State):
     return await callback.answer()
 
 
-@router.on_message((filters.Message, StateFilter(UsersState.nickname)))
-async def get_nickname(message: Message, state: State) -> Message:
+@router.on_message(StateFilter(UsersState.nickname))
+async def get_nickname(client: Client, message: Message, state: State) -> Message:
     text = message.text
-    await state.set_data({"nickname": text})
     reply = "Thx. Please now input your login. That's need for the log-in"
-    await state.set_state(UsersState.login_name)
-    return await message.reply(text=reply, parse_mode=ParseMode.HTML)
+    print(state.state, flush=True)
+    await state.set_data({"nickname": text})
+    print(state.state, flush=True)
+    await message.reply(text=reply, parse_mode=ParseMode.HTML)
+    await state.set_state(UsersState.login)
 
 
-@router.on_message((filters.Message, StateFilter(UsersState.login_name)))
-async def get_login_name(message: Message, state: State) -> Message:
+@router.on_message(StateFilter(UsersState.login))
+async def get_login(client: Client, message: Message, state: State) -> Message:
     text = message.text
     chat_id = str(message.from_user.id)
     user = await UsersRepository.get_by_chat_id(chat_id)
@@ -97,3 +100,6 @@ async def get_login_name(message: Message, state: State) -> Message:
     await UsersRepository.update(id=user["id"], values=values)
     await state.finish()
     return await start_menu(message=message, state=state)
+
+
+

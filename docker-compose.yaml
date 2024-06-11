@@ -11,15 +11,15 @@ services:
     ports:
       - "5432:5432"
 
-  telegram_avtoban:
+  telegram:
     build:
       context: .
       dockerfile: TelegramDockerfile
     command: ["dockerize", "-wait", "tcp://postgres_tasks:5432", "-timeout", "1m", "--", "python", "./main.py"]
     env_file:
-      - ./telegram/.env
+      - .env
     volumes:
-      - ./telegram/:/app
+      - .:/app
     depends_on:
       - postgres
     restart: always
